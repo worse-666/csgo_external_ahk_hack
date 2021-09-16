@@ -4,7 +4,7 @@ Ahk external hack for csgo.
 ## Features
 
 ### visuals
-* Glow
+* Non-flickering Glow
 * Weapon Glow
 * Chams
 * Model Brightness
@@ -13,7 +13,7 @@ Ahk external hack for csgo.
 * Anti Flash
 * No Smoke (Not working)
 * Remove Hands
-* Remove View Punch (Not working)
+* Remove View Punch
 * Radar reveal
 * Force Crosshair
 * Grenade Prediction
