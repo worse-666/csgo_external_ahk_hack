@@ -23,10 +23,6 @@ if (_ClassMemory.__Class != "_ClassMemory") {
     ExitApp
 }
 
-;give weapon_smokegrenade
-;give weapon_flashbang
-;give weapon_hegrenade
-;give weapon_incgrenade
 
 Global cl_grenadepreview := 0xDAD3C8 ;client 0=off 1=on Int
 Global sv_showimpacts := 0xDA60C0 ;client 0=off 1=on Int
@@ -38,8 +34,6 @@ Global mp_weapons_glow_on_ground := 0xDA2F40 ;client 0=off 1=on Int
 Global mat_postprocess_enable := 0xD98F40 ;client 0=off 1=on Int
 Global r_aspectratio := 0x58A9EC ;engine
 
-;smoke classid = 157
-
 
 Process, Wait, csgo.exe
 Global csgo := new _ClassMemory("ahk_exe csgo.exe", "", hProcessCopy)
@@ -49,15 +43,6 @@ Global engine := csgo.getModuleBaseAddress("engine.dll")
 pattern := csgo.hexStringToPattern("A3 ?? ?? ?? ?? 57 8B CB")
 Global smokecount := csgo.read(csgo.modulePatternScan("client.dll", pattern*)+0x1, "Uint")
 
-
-pattern := csgo.hexStringToPattern("F3 0F 11 44 C8 ?? F3 0F 10 45 ?? F3 0F 11 44 C8 ?? F3 0F 10 45 ?? F3 0F 11 44 C8 ??")
-Global colorGlowFixerOffset := csgo.modulePatternScan("client.dll", pattern*) 
-
-pattern := csgo.hexStringToPattern("F3 0F 11 44 C8 ?? 5F 5E 5B 8B E5 5D")
-Global alphaGlowFixerOffset := csgo.modulePatternScan("client.dll", pattern*)
-
-pattern := csgo.hexStringToPattern("88 5C D1 28 8B 00 8B 5D F4")
-Global occGlowFixerOffset := csgo.modulePatternScan("client.dll", pattern*)
 
 
 
@@ -175,17 +160,9 @@ Loop {
 			NumPut(0, Glow_Struct_Team, 0x10, "UChar")
 		}
 		if enable_glow {
-			csgo.writeBytes(colorGlowFixerOffset, "90 90 90 90 90 90") ;fix r
-			csgo.writeBytes(colorGlowFixerOffset+11, "90 90 90 90 90 90") ;fix g
-			csgo.writeBytes(colorGlowFixerOffset+22, "90 90 90 90 90 90") ;fix b
-			csgo.writeBytes(alphaGlowFixerOffset, "90 90 90 90 90 90") ;fix alpha
-			csgo.writeBytes(occGlowFixerOffset, "90 90 90 90") ;fix occ
+			csgo.writeBytes(client + force_update_spectator_glow, "EB")
 		} else {
-			csgo.writeBytes(colorGlowFixerOffset, "F3 0F 11 44 C8 08")
-			csgo.writeBytes(colorGlowFixerOffset+11, "F3 0F 11 44 C8 0C")
-			csgo.writeBytes(colorGlowFixerOffset+22, "F3 0F 11 44 C8 10")
-			csgo.writeBytes(alphaGlowFixerOffset, "F3 0F 11 44 C8 14")
-			csgo.writeBytes(occGlowFixerOffset, "88 5C D1 28")
+			csgo.writeBytes(client + force_update_spectator_glow, "74")
 		}
 
 		csgo.readRaw(client + dwEntityList, EntityList, (MaxPlayer+1)*0x10)
@@ -450,31 +427,6 @@ SendPacket(value) {
 	csgo.write(engine + dwbSendPackets, value, "UChar")
 }
 
-
-/*
-SetViewAnglesSilent(vecViewAngles) {
-	iCurrentSequenceNumber := csgo.read(engine + dwClientState, "Uint", clientstate_last_outgoing_command) + 2
-	,dwUserCMD := csgo.read(LocalPlayer + dwInput, "Uint")
-	,dwUserCMD += Mod(iCurrentSequenceNumber - 1, 150) * 0x64
-	,iUserCMDSequenceNumber := 0
-	,SendPacket(0)
-	while(iUserCMDSequenceNumber <= iCurrentSequenceNumber) {
-		vecOldViewAngles := GetViewAngles()
-		,iUserCMDSequenceNumber := csgo.read(dwUserCMD + 0x4, "Uint")
-	}
-	msgbox, hi
-	VarSetCapacity(ViewAngles, 0x8)
-	Loop 20 {
-		NumPut(vecViewAngles[1], ViewAngles, 0x0, "Float")
-		,NumPut(vecViewAngles[2], ViewAngles, 0x4, "Float")
-		,csgo.writeRaw(dwUserCMD + 0xC, &ViewAngles, 0x8, dwClientState_ViewAngles)
-	}
-	NumPut(vecOldViewAngles[1], ViewAngles, 0x0, "Float")
-	,NumPut(vecOldViewAngles[2], ViewAngles, 0x4, "Float")
-	,csgo.writeRaw(engine + dwClientState, &ViewAngles, 0x8, dwClientState_ViewAngles)
-	,SendPacket(1)
-}
-*/
 
 SplitRGBColor(RGBColor, ByRef Red, ByRef Green, ByRef Blue) {
     Red    := RGBColor >> 16 & 0xFF
