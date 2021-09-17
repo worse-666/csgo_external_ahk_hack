@@ -300,7 +300,7 @@ GetWeaponAmmo(dwEntity) {
 }
 
 GetViewModelHandler(dwEntity) {
-	Return csgo.read(dwEntity + m_iClip1, "Uint")
+	Return csgo.read(dwEntity + m_hViewModel, "Uint")
 }
 
 GetViewAngles() {
