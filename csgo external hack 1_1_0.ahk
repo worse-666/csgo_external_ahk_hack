@@ -24,15 +24,15 @@ if (_ClassMemory.__Class != "_ClassMemory") {
 }
 
 
-Global cl_grenadepreview := 0xDAD3C8 ;client 0=off 1=on Int
-Global sv_showimpacts := 0xDA60C0 ;client 0=off 1=on Int
-Global weapon_debug_spread_show := 0xDAF358 ;client 0=off 3=on Int
-Global weapon_recoil_view_punch_extra := 0xDA6534 ;client 0=off 0.055=on Float
-Global view_recoil_tracking := 0xD83FCC ;client 0=off 0.45=on Float
-Global r_drawothermodels := 0xD84C88 ;client 1=off 2=on Int
-Global mp_weapons_glow_on_ground := 0xDA2F40 ;client 0=off 1=on Int
-Global mat_postprocess_enable := 0xD98F40 ;client 0=off 1=on Int
-Global r_aspectratio := 0x58A9EC ;engine
+Global cl_grenadepreview := 0xDC3D58 ;client 0=off 1=on Int
+Global sv_showimpacts := 0xDBC3E0 ;client 0=off 1=on Int
+Global weapon_debug_spread_show := 0xDC5DF0 ;client 0=off 3=on Int
+Global weapon_recoil_view_punch_extra := 0xDBC8AC ;client 0=off 0.055=on Float
+Global view_recoil_tracking := 0xD9A14C ;client 0=off 0.45=on Float
+Global r_drawothermodels := 0xD9AE08 ;client 1=off 2=on Int
+Global mp_weapons_glow_on_ground := 0xDB91D0 ;client 0=off 1=on Int
+Global mat_postprocess_enable := 0xDAF0C0 ;client 0=off 1=on Int
+Global r_aspectratio := 0x58A994 ;engine
 
 
 Process, Wait, csgo.exe
