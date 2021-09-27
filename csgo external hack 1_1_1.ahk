@@ -33,6 +33,7 @@ Global r_drawothermodels := 0xD9AE08 ;client 1=off 2=on Int
 Global mp_weapons_glow_on_ground := 0xDB91D0 ;client 0=off 1=on Int
 Global mat_postprocess_enable := 0xDAF0C0 ;client 0=off 1=on Int
 Global r_aspectratio := 0x58A994 ;engine
+Global r_drawparticles := 0xDA9780 ;client 0=off 1=on Int
 
 
 Process, Wait, csgo.exe
@@ -40,8 +41,8 @@ Global csgo := new _ClassMemory("ahk_exe csgo.exe", "", hProcessCopy)
 Global client := csgo.getModuleBaseAddress("client.dll")
 Global engine := csgo.getModuleBaseAddress("engine.dll")
 
-pattern := csgo.hexStringToPattern("A3 ?? ?? ?? ?? 57 8B CB")
-Global smokecount := csgo.read(csgo.modulePatternScan("client.dll", pattern*)+0x1, "Uint")
+pattern := csgo.hexStringToPattern("60 ?? ?? 0B 08")
+Global smokecount := csgo.modulePatternScan("client.dll", pattern*) + 0xC
 
 
 
@@ -228,6 +229,7 @@ Loop {
 		csgo.write(LocalPlayer + m_flFlashMaxAlpha, enable_anti_flash ? 0:255, "Float") ;anti flash
 
 		csgo.write(smokecount, enable_no_smoke ? 0:, "Uint") ;no smoke
+		SetConVar(client, r_drawparticles, enable_no_smoke ? 0:1, "Int") ;no smoke
 
 		csgo.write(LocalPlayer + 0x258, enable_remove_hands ? 0:340, "Uint") ;remove hands
 
