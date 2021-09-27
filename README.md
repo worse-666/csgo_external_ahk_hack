@@ -41,6 +41,9 @@ Ahk external hack for csgo.
 ### 1.1.1
 * update offset
 
+### 1.1.2
+* fix no smoke
+
 
 
 
