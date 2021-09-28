@@ -11,7 +11,7 @@ Ahk external hack for csgo.
 * FOV Changer
 * Aspect Ratio Changer
 * Anti Flash
-* No Smoke (Not working)
+* No Smoke
 * Remove Hands
 * Remove View Punch
 * Radar reveal
@@ -19,6 +19,7 @@ Ahk external hack for csgo.
 * Grenade Prediction
 * Disable Post-Processing
 * Bullet Impacts
+* Fullbright
 
 ### misc
 * Auto Bhop
