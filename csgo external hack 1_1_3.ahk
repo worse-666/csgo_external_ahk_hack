@@ -1,6 +1,7 @@
 #Include classMemory.ahk
 #Include csgo offsets.ahk
 #Include imgui.ahk
+
 #NoEnv
 #Persistent
 #InstallKeybdHook
@@ -34,15 +35,19 @@ Global mp_weapons_glow_on_ground := 0xDB91D0 ;client 0=off 1=on Int
 Global mat_postprocess_enable := 0xDAF0C0 ;client 0=off 1=on Int
 Global r_aspectratio := 0x58A994 ;engine
 Global r_drawparticles := 0xDA9780 ;client 0=off 1=on Int
+Global mat_fullbright := 0xBBC68 ;materialsystem 0=off 1=on Int
+
 
 
 Process, Wait, csgo.exe
 Global csgo := new _ClassMemory("ahk_exe csgo.exe", "", hProcessCopy)
 Global client := csgo.getModuleBaseAddress("client.dll")
 Global engine := csgo.getModuleBaseAddress("engine.dll")
+Global materialsystem := csgo.getModuleBaseAddress("materialsystem.dll")
 
 pattern := csgo.hexStringToPattern("60 ?? ?? 0B 08")
 Global smokecount := csgo.modulePatternScan("client.dll", pattern*) + 0xC
+
 
 
 
@@ -221,8 +226,11 @@ Loop {
 
 		SetConVar(engine, model_ambient_min, enable_model_brightness ? model_brightness_value:0, "Float")
 
-		if enable_aspect_ratio_changer
+		if enable_aspect_ratio_changer {
 			SetConVar(engine, r_aspectratio, aspect_ratio_value, "Float")
+		} else {
+			SetConVar(engine, r_aspectratio, 0, "Float")
+		}
 
 		csgo.write(LocalPlayer + m_iDefaultFOV, enable_fov_changer ? fov_changer_value:90, "Uint") ;fov changer
 
@@ -238,11 +246,13 @@ Loop {
 
 		SetConVar(client, weapon_debug_spread_show, (enable_force_crosshair && !LocalPlayer_IsScoped) ? 3:0, "Int") ;force crosshair
 
-		SetConVar(client, cl_grenadepreview, enable_disable_Post_Processing ? 1:0, "Int") ;grenade prediction
+		SetConVar(client, cl_grenadepreview, enable_grenade_prediction ? 1:0, "Int") ;grenade prediction
 
 		SetConVar(client, mat_postprocess_enable, enable_disable_Post_Processing ? 0:1, "Int") ;disable Post-Processing
 
 		SetConVar(client, sv_showimpacts, enable_bullet_impacts ? 1:0, "Int") ;bullet impacts
+
+		SetConVar(materialsystem, mat_fullbright, enable_full_bright ? 1:0, "Int") ;fullbright
 
 
 		if (enable_auto_bhop && GetKeyState("Space") && WinActive("ahk_exe csgo.exe") && !IsMouseEnable()) { ;auto bhop
@@ -429,7 +439,6 @@ SendPacket(value) {
 	csgo.write(engine + dwbSendPackets, value, "UChar")
 }
 
-
 SplitRGBColor(RGBColor, ByRef Red, ByRef Green, ByRef Blue) {
     Red    := RGBColor >> 16 & 0xFF
     ,Green := RGBColor >> 8 & 0xFF
@@ -524,6 +533,8 @@ settings_gui() {
 		_ImGui_Checkbox("Disable Post-Processing", enable_disable_Post_Processing)
 
 		_ImGui_Checkbox("Bullet Impacts", enable_bullet_impacts)
+
+		_ImGui_Checkbox("Fullbright", enable_full_bright)
 
 	_ImGui_EndTabItem()
 	}
