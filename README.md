@@ -44,6 +44,9 @@ Ahk external hack for csgo.
 ### 1.1.2
 * fix no smoke
 
+### 1.1.3
+* Add fullbright
+
 
 
 
