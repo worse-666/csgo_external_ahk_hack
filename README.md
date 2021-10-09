@@ -48,7 +48,8 @@ Ahk external hack for csgo.
 ### 1.1.3
 * Add fullbright
 
-
+### 1.1.4
+* update offset
 
 
 
