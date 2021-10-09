@@ -25,16 +25,16 @@ if (_ClassMemory.__Class != "_ClassMemory") {
 }
 
 
-Global cl_grenadepreview := 0xDC3D58 ;client 0=off 1=on Int
-Global sv_showimpacts := 0xDBC3E0 ;client 0=off 1=on Int
-Global weapon_debug_spread_show := 0xDC5DF0 ;client 0=off 3=on Int
-Global weapon_recoil_view_punch_extra := 0xDBC8AC ;client 0=off 0.055=on Float
-Global view_recoil_tracking := 0xD9A14C ;client 0=off 0.45=on Float
-Global r_drawothermodels := 0xD9AE08 ;client 1=off 2=on Int
-Global mp_weapons_glow_on_ground := 0xDB91D0 ;client 0=off 1=on Int
-Global mat_postprocess_enable := 0xDAF0C0 ;client 0=off 1=on Int
+Global cl_grenadepreview := 0xDC4D78 ;client 0=off 1=on Int
+Global sv_showimpacts := 0xDBD3E0 ;client 0=off 1=on Int
+Global weapon_debug_spread_show := 0xDC6E10 ;client 0=off 3=on Int
+Global weapon_recoil_view_punch_extra := 0xDBD8AC ;client 0=off 0.055=on Float
+Global view_recoil_tracking := 0xD9B14C ;client 0=off 0.45=on Float
+Global r_drawothermodels := 0xD9BE08 ;client 1=off 2=on Int
+Global mp_weapons_glow_on_ground := 0xDBA1D0 ;client 0=off 1=on Int
+Global mat_postprocess_enable := 0xDB00C0 ;client 0=off 1=on Int
 Global r_aspectratio := 0x58A994 ;engine
-Global r_drawparticles := 0xDA9780 ;client 0=off 1=on Int
+Global r_drawparticles := 0xDAA780 ;client 0=off 1=on Int
 Global mat_fullbright := 0xBBC68 ;materialsystem 0=off 1=on Int
 
 
@@ -45,7 +45,7 @@ Global client := csgo.getModuleBaseAddress("client.dll")
 Global engine := csgo.getModuleBaseAddress("engine.dll")
 Global materialsystem := csgo.getModuleBaseAddress("materialsystem.dll")
 
-pattern := csgo.hexStringToPattern("60 ?? ?? 0B 08")
+pattern := csgo.hexStringToPattern("A0 ?? ?? 0B 08")
 Global smokecount := csgo.modulePatternScan("client.dll", pattern*) + 0xC
 
 
