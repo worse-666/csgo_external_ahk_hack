@@ -1,4 +1,4 @@
-﻿#Include classMemory.ahk
+#Include classMemory.ahk
 #Include csgo offsets.ahk
 #Include imgui.ahk
 
