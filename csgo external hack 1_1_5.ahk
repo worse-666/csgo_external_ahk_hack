@@ -555,6 +555,7 @@ settings_gui() {
 	_ImGui_SetWindowSize(NumGet(rc, 8, "int"), NumGet(rc, 12, "int"))
 
 	_ImGui_BeginTabBar("setting tab")
+	/*
 	if _ImGui_BeginTabItem("aimbot") {
 		_ImGui_NewLine()
 		_ImGui_Columns(2)
@@ -566,6 +567,7 @@ settings_gui() {
 
 	_ImGui_EndTabItem()
 	}
+	*/
 
 	if _ImGui_BeginTabItem("visuals") {
 		_ImGui_NewLine()
