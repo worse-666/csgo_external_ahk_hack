@@ -5,27 +5,27 @@ Ahk external hack for csgo.
 
 ### visuals
 * Non-flickering Glow
-* Weapon Glow
+* ~Weapon Glow~
 * Chams
 * Model Brightness
 * FOV Changer
-* Aspect Ratio Changer
+* ~Aspect Ratio Changer~
 * Anti Flash
-* No Smoke
-* Remove Hands
-* Remove View Punch
+* ~No Smoke~
+* ~Remove Hands~
+* ~Remove View Punch~
 * Radar reveal
 * Force Crosshair
-* Grenade Prediction
-* Disable Post-Processing
-* Bullet Impacts
-* Fullbright
+* ~Grenade Prediction~
+* ~Disable Post-Processing~
+* ~Bullet Impacts~
+* ~Fullbright~
 
 ### misc
 * Auto Bhop
 * Auto Pistol
-* Auto Reload
-* CrosshairID Team Check
+* ~Auto Reload~
+* ~CrosshairID Team Check~
 * RCS
 
 ## Screenshot
