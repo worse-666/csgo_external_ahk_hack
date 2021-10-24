@@ -54,6 +54,8 @@ Ahk external hack for csgo.
 ### 1.1.5
 * Remove some features but this version doesn't need to be updated manually.
 
+### 1.1.6
+* Add fullbloom glow
 
 
 
