@@ -140,6 +140,7 @@ Loop {
 			NumPut(glow_enemy_color_b/255, Glow_Struct_Enemy, 0x8, "Float")
 			NumPut(glow_enemy_color_a/255, Glow_Struct_Enemy, 0xC, "Float")
 			NumPut(1, Glow_Struct_Enemy, 0x10, "UChar")
+			NumPut(enable_glow_enemy_fullbloom, Glow_Struct_Enemy, 0x11, "UChar")
 		} else {
 			NumPut(0, Glow_Struct_Enemy, 0x0, "Float")
 			NumPut(0, Glow_Struct_Enemy, 0x4, "Float")
@@ -154,6 +155,7 @@ Loop {
 			NumPut(glow_team_color_b/255, Glow_Struct_Team, 0x8, "Float")
 			NumPut(glow_team_color_a/255, Glow_Struct_Team, 0xC, "Float")
 			NumPut(1, Glow_Struct_Team, 0x10, "UChar")
+			NumPut(enable_glow_team_fullbloom, Glow_Struct_Team, 0x11, "UChar")
 		} else {
 			NumPut(0, Glow_Struct_Team, 0x0, "Float")
 			NumPut(0, Glow_Struct_Team, 0x4, "Float")
@@ -226,7 +228,7 @@ Loop {
 
 		
 		if (enable_auto_bhop && GetKeyState("Space") && WinActive("ahk_exe csgo.exe") && !IsMouseEnable()) { ;auto bhop
-			csgo.write(client + dwForceJump, (LocalPlayer_Flags=257 || LocalPlayer_Flags=263) ? 5:4, "Uint")
+			csgo.write(client + dwForceJump, (LocalPlayer_Flags & 1) ? 5:4, "Uint")
 		}
 		
 
@@ -465,7 +467,7 @@ Glow(ByRef glowObj,ByRef glowInd, ByRef struct) {
 	csgo.writeRaw(glowObj+(glowInd*0x38)+0x8, &struct, 16)
 	csgo.write(glowObj+(glowInd*0x38)+0x28,  NumGet(struct, 0x10, "Char"), "UChar")
 	csgo.write(glowObj+(glowInd*0x38)+0x29, 0, "UChar")
-	;,csgo.write(glowObj+(glowInd*0x38)+0x30, 2, "Uint")
+	csgo.write(glowObj+(glowInd*0x38)+0x2A,  NumGet(struct, 0x11, "Char"), "UChar")
 }
 
 chams(dwEntity, r, g, b) {
@@ -576,9 +578,13 @@ settings_gui() {
 		_ImGui_Checkbox("Glow", enable_glow)
 		_ImGui_BeginChild("glow_child", 320, 112, 1)
 			_ImGui_Checkbox("Enemy", enable_glow_enemy)
+			_ImGui_SameLine()
+			_ImGui_Checkbox("FullBloom", enable_glow_enemy_fullbloom)
 			_ImGui_ColorEdit("enemy color", glow_enemy_color)
 
 			_ImGui_Checkbox("Team", enable_glow_team)
+			_ImGui_SameLine()
+			_ImGui_Checkbox("FullBloom", enable_glow_team_fullbloom)
 			_ImGui_ColorEdit("team color", glow_team_color)
 		_ImGui_EndChild()
 
