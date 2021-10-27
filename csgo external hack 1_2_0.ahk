@@ -59,6 +59,7 @@ Class CPlayer {
 		,this.m_aimPunchAngleX  := NumGet(ent_struct, m_aimPunchAngle, "Float")
 		,this.m_aimPunchAngleY  := NumGet(ent_struct, m_aimPunchAngle+0x4, "Float")
 		,this.m_bIsScoped       := NumGet(ent_struct, m_bIsScoped, "int")
+		,this.m_bSpotted        := NumGet(ent_struct, m_bSpotted, "int")
 		,this.m_bSpottedByMask  := NumGet(ent_struct, m_bSpottedByMask, "int")
 		,this.m_fFlags          := NumGet(ent_struct, m_fFlags, "int")
 		,this.m_flFlashDuration := NumGet(ent_struct, m_flFlashDuration, "Float")
