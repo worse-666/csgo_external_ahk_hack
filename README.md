@@ -57,8 +57,8 @@ Ahk external hack for csgo.
 ### 1.1.6
 * Add fullbloom glow
 
-
-
+### 1.2.0
+* Speed up loop
 
 
 
