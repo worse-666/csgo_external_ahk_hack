@@ -61,6 +61,8 @@ This cheat uses [hazedumper](https://github.com/frk1/hazedumper) offset.
 ### 1.2.0
 * Speed up loop
 
+### 1.2.1
+* Add spin bot on main menu
 
 
 
