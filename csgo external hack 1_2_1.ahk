@@ -414,6 +414,12 @@ Loop {
 
 
 	} else {
+		if (csgo.read(client + 0x052123E8, "int", 0xC, 0x18) && enable_spin_main_menu_model) {
+			csgo.write(client + 0x052123E8, 9999999, "float", 0xC, 0x18, 0x1D0)
+			if (csgo.read(client + 0x052123E8, "float", 0xC, 0x18, 0x1CC) > 9000000) {
+				csgo.write(client + 0x052123E8, -9999999, "float", 0xC, 0x18, 0x1CC)
+			}
+		}
 		Sleep 10
 	}
 
@@ -625,6 +631,8 @@ settings_gui() {
 		_ImGui_Checkbox("Anti Flash", enable_anti_flash)
 
 		_ImGui_Checkbox("Radar reveal", enable_radar_reveal)
+		
+		_ImGui_Checkbox("Spin main menu model", enable_spin_main_menu_model)
 
 	_ImGui_EndTabItem()
 	}
