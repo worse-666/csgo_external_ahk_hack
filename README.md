@@ -21,6 +21,7 @@ This cheat uses [hazedumper](https://github.com/frk1/hazedumper) offset.
 * ~Disable Post-Processing~
 * ~Bullet Impacts~
 * ~Fullbright~
+* Spin bot on main menu
 
 ### misc
 * Auto Bhop
