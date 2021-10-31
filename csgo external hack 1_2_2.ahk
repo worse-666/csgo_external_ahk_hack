@@ -1,5 +1,6 @@
 #Include classMemory.ahk
 #Include csgo offsets.ahk
+#Include CWeapon.ahk
 #Include imgui.ahk
 
 #NoEnv
@@ -13,7 +14,6 @@ SetMouseDelay, -1
 SendMode Input
 SetBatchLines,-1
 ListLines, Off
-Process, Priority, , H
 
 if !Read_csgo_offsets_from_hazedumper() {
 	MsgBox, 48, Error, Failed to get csgo offsets!
@@ -56,11 +56,11 @@ Class CPlayer {
 	__New(entity) {
 		csgo.readRaw(entity, ent_struct, m_iCrosshairId+0x4)
 		this.entity             := entity
-		,this.m_aimPunchAngleX  := NumGet(ent_struct, m_aimPunchAngle, "Float")
-		,this.m_aimPunchAngleY  := NumGet(ent_struct, m_aimPunchAngle+0x4, "Float")
+		,this.m_aimPunchAngle   := [NumGet(ent_struct, m_aimPunchAngle, "Float"), NumGet(ent_struct, m_aimPunchAngle+0x4, "Float")]
 		,this.m_bIsScoped       := NumGet(ent_struct, m_bIsScoped, "int")
 		,this.m_bSpotted        := NumGet(ent_struct, m_bSpotted, "int")
 		,this.m_bSpottedByMask  := NumGet(ent_struct, m_bSpottedByMask, "int")
+		,this.m_dwBoneMatrix    := NumGet(ent_struct, m_dwBoneMatrix, "int")
 		,this.m_fFlags          := NumGet(ent_struct, m_fFlags, "int")
 		,this.m_flFlashDuration := NumGet(ent_struct, m_flFlashDuration, "Float")
 		,this.m_flFlashMaxAlpha := NumGet(ent_struct, m_flFlashMaxAlpha, "Float") 
@@ -75,7 +75,10 @@ Class CPlayer {
 		,this.m_iTeamNum        := NumGet(ent_struct, m_iTeamNum, "int")
 		,this.m_lifeState       := NumGet(ent_struct, m_lifeState, "int")
 		,this.m_nTickBase       := NumGet(ent_struct, m_nTickBase, "int")
+		,this.m_vecOrigin       := [NumGet(ent_struct, m_vecOrigin, "float"), NumGet(ent_struct, m_vecOrigin+0x4, "float"), NumGet(ent_struct, m_vecOrigin+0x8, "float")]
 		,this.vecVelocity       := Sqrt(NumGet(ent_struct, m_vecVelocity, "Float")**2 + NumGet(ent_struct, m_vecVelocity+0x4, "Float")**2)
+		,this.m_vecViewOffset   := [NumGet(ent_struct, m_vecViewOffset, "float"), NumGet(ent_struct, m_vecViewOffset+0x4, "float"), NumGet(ent_struct, m_vecViewOffset+0x8, "float")]
+		,this.localHead         := [this.m_vecOrigin[1]+this.m_vecViewOffset[1], this.m_vecOrigin[2]+this.m_vecViewOffset[2], this.m_vecOrigin[3]+this.m_vecViewOffset[3]]
 		,this.m_bDormant        := NumGet(player_struct, m_bDormant, "int")
 	}
 
@@ -96,6 +99,10 @@ Class CPlayer {
 
 	GetClassId() {
 		return csgo.read(this.entity + 0x8, "Uint", 0x8, 0x1, 0x14)
+	}
+
+	GetBone(BoneId) {
+		Return [ csgo.read(this.m_dwBoneMatrix + 0x30*BoneId + 0x0C, "Float"), csgo.read(this.m_dwBoneMatrix + 0x30*BoneId + 0x1C, "Float"), csgo.read(this.m_dwBoneMatrix + 0x30*BoneId + 0x2C, "Float")]
 	}
 }
 
@@ -258,8 +265,9 @@ Global client := csgo.getModuleBaseAddress("client.dll")
 Global engine := csgo.getModuleBaseAddress("engine.dll")
 Global materialsystem := csgo.getModuleBaseAddress("materialsystem.dll")
 
-;pattern := csgo.hexStringToPattern("A0 ?? ?? 0B 08")
-;Global smokecount := csgo.modulePatternScan("client.dll", pattern*) + 0xC
+;pattern := csgo.hexStringToPattern("55 8B EC 81 EC ?? ?? ?? ?? 56 57 8B F9 C7 45")
+;Global test := csgo.modulePatternScan("engine.dll", pattern*) + 0x0
+;msgbox % test
 
 
 
@@ -271,6 +279,7 @@ Global materialsystem := csgo.getModuleBaseAddress("materialsystem.dll")
 
 DllCall("QueryPerformanceFrequency", "Int64*", freq)
 ShootBefore := ShootAfter := 0
+Aimbot_ShootBefore := Aimbot_ShootAfter := 0
 
 
 Global enable_glow := 0
@@ -327,10 +336,11 @@ Loop {
 		settings_gui()
 	IsInGame := IsInGame()
 	Global LocalPlayer := new CPlayer(GetLocalPlayer())
-	if (IsInGame && LocalPlayer.entity) {
+	glowObj := GetGlowObj()
+	if (IsInGame && LocalPlayer.entity && glowObj) {
 		
 		MaxPlayer := GetMaxPlayer()
-		,glowObj := GetGlowObj()
+		,Weapon := new CWeapon(LocalPlayer.GetWeapon())
 
 		if (enable_glow) {
 			csgo.writeBytes(client + force_update_spectator_glow, "EB")
@@ -343,39 +353,46 @@ Loop {
 		
 		csgo.readRaw(client + dwEntityList, EntityList, (MaxPlayer+1)*0x10)
 		Loop % MaxPlayer {
-			dwEntity := new CPlayer(NumGet(EntityList, A_index*0x10, "Uint"))
+			Global Entity := new CPlayer(NumGet(EntityList, A_index*0x10, "int"))
 
-			if (dwEntity.entity=0 || dwEntity.entity=LocalPlayer.entity || dwEntity.m_lifeState || dwEntity.m_bDormant)
+			if (Entity.entity=0 || Entity.entity=LocalPlayer.entity || Entity.m_lifeState || Entity.m_bDormant || Entity.GetClassId() != ClassId.Player)
 				Continue
 
-			csgo.readRaw(glowObj+(dwEntity.m_iGlowIndex*0x38), glow_struct, 0x38)
-			if (LocalPlayer.m_iTeamNum != dwEntity.m_iTeamNum)  {
+			csgo.readRaw(glowObj+(Entity.m_iGlowIndex*0x38), glow_struct, 0x38)
+			if (LocalPlayer.m_iTeamNum != Entity.m_iTeamNum)  {
 				if (enable_glow && enable_glow_enemy) {
-					Glow(glowObj, dwEntity.m_iGlowIndex, glow_struct, glow_enemy_color_r, glow_enemy_color_g, glow_enemy_color_b, glow_enemy_color_a, 1, 0, enable_glow_enemy_fullbloom, 0)
+					Glow(glowObj, Entity.m_iGlowIndex, glow_struct, glow_enemy_color_r, glow_enemy_color_g, glow_enemy_color_b, glow_enemy_color_a, 1, 0, enable_glow_enemy_fullbloom, 0)
 				} else {
-					Glow(glowObj, dwEntity.m_iGlowIndex, glow_struct, 0, 0, 0, 0, 0, 0, 0, 0)
+					Glow(glowObj, Entity.m_iGlowIndex, glow_struct, 0, 0, 0, 0, 0, 0, 0, 0)
 				}
 
 				if (enable_chams && enable_chams_enemy) {
 					SplitRGBColor(chams_enemy_color, chams_enemy_color_r, chams_enemy_color_g, chams_enemy_color_b)
-					chams(dwEntity.entity, chams_enemy_color_r, chams_enemy_color_g, chams_enemy_color_b)
+					chams(Entity.entity, chams_enemy_color_r, chams_enemy_color_g, chams_enemy_color_b)
 				} else {
-					chams(dwEntity.entity, 255, 255, 255)
+					chams(Entity.entity, 255, 255, 255)
 				}
-				if (enable_radar_reveal && dwEntity.m_bSpotted!=2) {
-					csgo.write(dwEntity.entity + m_bSpotted, 2, "Char")
+				if (enable_radar_reveal && Entity.m_bSpotted!=2) {
+					csgo.write(Entity.entity + m_bSpotted, 2, "Char")
 				}
+				DllCall("QueryPerformanceCounter", "Int64*", Aimbot_ShootAfter)
+				if (enable_trash_aimbot && !LocalPlayer.m_lifeState && ((Entity.m_bSpottedByMask & (1 << GetLocalPlayerID())) || (LocalPlayer.m_bSpottedByMask & (1 << A_index))) && GetWeaponType(Weapon.m_iItemDefinitionIndex) >= WEAPONTYPE_PISTOL && GetWeaponType(Weapon.m_iItemDefinitionIndex) <= WEAPONTYPE_MACHINEGUN && !Weapon.m_bInReload && Weapon.m_iClip1 &&((Aimbot_ShootAfter-Aimbot_ShootBefore)/freq*1000)>=15) {
+					AimAt()
+					csgo.write(client + dwForceAttack, 6, "int")
+					DllCall("QueryPerformanceCounter", "Int64*", Aimbot_ShootBefore)
+				}
+				
 			} else {
 				if (enable_glow && enable_glow_team) {
-					Glow(glowObj, dwEntity.m_iGlowIndex, glow_struct, glow_team_color_r, glow_team_color_g, glow_team_color_b, glow_team_color_a, 1, 0, enable_glow_team_fullbloom, 0)
+					Glow(glowObj, Entity.m_iGlowIndex, glow_struct, glow_team_color_r, glow_team_color_g, glow_team_color_b, glow_team_color_a, 1, 0, enable_glow_team_fullbloom, 0)
 				} else {
-					Glow(glowObj, dwEntity.m_iGlowIndex, glow_struct, 0, 0, 0, 0, 0, 0, 0, 0)
+					Glow(glowObj, Entity.m_iGlowIndex, glow_struct, 0, 0, 0, 0, 0, 0, 0, 0)
 				}
 				if (enable_chams && enable_chams_team) {
 					SplitRGBColor(chams_team_color, chams_team_color_r, chams_team_color_g, chams_team_color_b)
-					chams(dwEntity.entity, chams_team_color_r, chams_team_color_g, chams_team_color_b)
+					chams(Entity.entity, chams_team_color_r, chams_team_color_g, chams_team_color_b)
 				} else {
-					chams(dwEntity.entity, 255, 255, 255)
+					chams(Entity.entity, 255, 255, 255)
 				}
 			}
 		}
@@ -399,9 +416,8 @@ Loop {
 			csgo.write(client + dwForceJump, 6, "Int")
 		}
 		
-		WeaponIndex := GetWeaponIndex(LocalPlayer.GetWeapon())
 		DllCall("QueryPerformanceCounter", "Int64*", ShootAfter)
-		if (enable_auto_pistol && GetKeyState("LButton") && WinActive("ahk_exe csgo.exe") && !IsMouseEnable() && (WeaponIndex=30 || WeaponIndex=36 || WeaponIndex=32 || WeaponIndex=4 || WeaponIndex=3 || WeaponIndex=2 || WeaponIndex=1 || WeaponIndex=61) && ((ShootAfter-ShootBefore)/freq*1000)>=30) {
+		if (enable_auto_pistol && GetKeyState("LButton") && WinActive("ahk_exe csgo.exe") && !IsMouseEnable() && GetWeaponType(Weapon.m_iItemDefinitionIndex) = WEAPONTYPE_PISTOL && ((ShootAfter-ShootBefore)/freq*1000)>=30) {
 			csgo.write(client + dwForceAttack, 6, "Uint")
 			DllCall("QueryPerformanceCounter", "Int64*", ShootBefore)
 		}
@@ -414,12 +430,6 @@ Loop {
 
 
 	} else {
-		if (csgo.read(client + 0x052123E8, "int", 0xC, 0x18) && enable_spin_main_menu_model) {
-			csgo.write(client + 0x052123E8, 9999999, "float", 0xC, 0x18, 0x1D0)
-			if (csgo.read(client + 0x052123E8, "float", 0xC, 0x18, 0x1CC) > 9000000) {
-				csgo.write(client + 0x052123E8, -9999999, "float", 0xC, 0x18, 0x1CC)
-			}
-		}
 		Sleep 10
 	}
 
@@ -484,14 +494,6 @@ ForceJump(value) {
 GetGlowObj() {
 	Return csgo.read(client + dwGlowObjectManager, "int")
 }
-/*
-Glow(ByRef glowObj,ByRef glowInd, ByRef struct) {
-	csgo.writeRaw(glowObj+(glowInd*0x38), &struct, 16)
-	csgo.write(glowObj+(glowInd*0x38)+0x28,  NumGet(struct, 0x10, "Char"), "Char")
-	csgo.write(glowObj+(glowInd*0x38)+0x29, 0, "Char")
-	csgo.write(glowObj+(glowInd*0x38)+0x2A,  NumGet(struct, 0x11, "Char"), "Char")
-}
-*/
 
 Glow(ByRef glowObj, ByRef index, ByRef struct, ByRef r, ByRef g, ByRef b, ByRef a, ByRef rwo, ByRef rwu, ByRef fbr, ByRef gs:=0) {
 	NumPut(r/255, struct, GLOWSTRUCT_glowColor_r, "float")
@@ -514,8 +516,8 @@ RCS(value:=0) {
 	static OldPunchAngles := [0, 0]
 	if (LocalPlayer.m_iShotsFired>1) {
 		CurrentViewAngles := GetViewAngles()
-		,NewViewAngles[1] := (CurrentViewAngles[1] + OldPunchAngles[1] * 2 * (value/100)) - (LocalPlayer.m_aimPunchAngleX * 2 * (value/100))
-	    ,NewViewAngles[2] := (CurrentViewAngles[2] + OldPunchAngles[2] * 2 * (value/100)) - (LocalPlayer.m_aimPunchAngleY * 2 * (value/100))
+		,NewViewAngles[1] := (CurrentViewAngles[1] + OldPunchAngles[1] * 2 * (value/100)) - (LocalPlayer.m_aimPunchAngle[1] * 2 * (value/100))
+	    ,NewViewAngles[2] := (CurrentViewAngles[2] + OldPunchAngles[2] * 2 * (value/100)) - (LocalPlayer.m_aimPunchAngle[2] * 2 * (value/100))
 
 	    ,NewViewAngles[1] := (NewViewAngles[1]>89) ? 89:NewViewAngles[1]
 	    ,NewViewAngles[1] := (NewViewAngles[1]<-89) ? -89:NewViewAngles[1]
@@ -528,21 +530,65 @@ RCS(value:=0) {
 
 	    
 
-	    OldPunchAngles[1] := LocalPlayer.m_aimPunchAngleX
-	    ,OldPunchAngles[2] := LocalPlayer.m_aimPunchAngleY
+	    OldPunchAngles[1] := LocalPlayer.m_aimPunchAngle[1]
+	    ,OldPunchAngles[2] := LocalPlayer.m_aimPunchAngle[2]
 
 	    VarSetCapacity(ViewAngles, 0x8)
 	    NumPut(NewViewAngles[1], ViewAngles, 0x0, "Float")
 	    NumPut(NewViewAngles[2], ViewAngles, 0x4, "Float")
 	    csgo.writeRaw(engine + dwClientState, &ViewAngles, 0x8, dwClientState_ViewAngles)
 	} else {
-		OldPunchAngles[1] := LocalPlayer.m_aimPunchAngleX
-		,OldPunchAngles[2] := LocalPlayer.m_aimPunchAngleY
+		OldPunchAngles[1] := LocalPlayer.m_aimPunchAngle[1]
+		,OldPunchAngles[2] := LocalPlayer.m_aimPunchAngle[2]
 	}
 }
 
 SendPacket(value) {
 	csgo.write(engine + dwbSendPackets, value, "Char")
+}
+
+Getvm() {
+	csgo.readRaw(client + dwViewMatrix, matrix, 64)
+	Return [ NumGet(matrix, 0, "Float"), NumGet(matrix, 4, "Float"), NumGet(matrix, 8, "Float"), NumGet(matrix, 12, "Float"), NumGet(matrix, 16, "Float"), NumGet(matrix, 20, "Float"), NumGet(matrix, 24, "Float"), NumGet(matrix, 28, "Float"), NumGet(matrix, 32, "Float"), NumGet(matrix, 36, "Float"), NumGet(matrix, 40, "Float"), NumGet(matrix, 44, "Float"), NumGet(matrix, 48, "Float"), NumGet(matrix, 52, "Float"), NumGet(matrix, 56, "Float"), NumGet(matrix, 60, "Float")]
+}
+
+WorldToScreen(pos, matrix, windowWidth, windowHeight) {
+	clipCoords := {}
+	,clipCoords.x := pos[1]*matrix[1]  + pos[2]*matrix[2]  + pos[3]*matrix[3]  + matrix[4]
+	,clipCoords.y := pos[1]*matrix[5]  + pos[2]*matrix[6]  + pos[3]*matrix[7]  + matrix[8]
+	,clipCoords.z := pos[1]*matrix[9]  + pos[2]*matrix[10] + pos[3]*matrix[11] + matrix[12]
+	,clipCoords.w := pos[1]*matrix[13] + pos[2]*matrix[14] + pos[3]*matrix[15] + matrix[16]
+	if (clipCoords.w < 0.1) {
+        return false
+	}
+	return [(windowWidth>>1)*(clipCoords.x/clipCoords.w) + (clipCoords.x/clipCoords.w) + (windowWidth>>1), -(windowHeight>>1)*(clipCoords.y/clipCoords.w) + (clipCoords.y/clipCoords.w) + (windowHeight>>1)]
+}
+
+AimAt() {
+	EntityPos := Entity.GetBone(8)
+	,delta := sub3(LocalPlayer.localHead, EntityPos)
+	,hyp := Hyp(delta)
+	,anglex := rad2deg(asin(delta[3]/hyp))
+	,angley := rad2deg(atan(delta[2]/delta[1])) + (delta[1]>=0 ? 180:0)
+	csgo.write(engine + dwClientState, anglex-(LocalPlayer.m_aimPunchAngle[1]*2), "Float", dwClientState_ViewAngles)
+	csgo.write(engine + dwClientState, angley-(LocalPlayer.m_aimPunchAngle[2]*2), "Float", dwClientState_ViewAngles+0x4)
+	;msgbox % Entity.entity . "`n" . EntityPos[1] . "`n" . EntityPos[2] . "`n" . EntityPos[3] . "`n"
+}
+
+sub3(a, b) {
+	return [a[1]-b[1], a[2]-b[2], a[3]-b[3]]
+}
+
+Hyp(d) {
+	Return Sqrt(d[1]**2 + d[2]**2 + d[3]**2)
+}
+
+deg2rad(degrees) {
+    return degrees * ((4*ATan(1)) / 180)
+}
+
+rad2deg(radians) {
+    return radians * (180 / (4*ATan(1)))
 }
 
 SplitRGBColor(RGBColor, ByRef Red, ByRef Green, ByRef Blue) {
@@ -631,8 +677,7 @@ settings_gui() {
 		_ImGui_Checkbox("Anti Flash", enable_anti_flash)
 
 		_ImGui_Checkbox("Radar reveal", enable_radar_reveal)
-		
-		_ImGui_Checkbox("Spin main menu model", enable_spin_main_menu_model)
+
 
 	_ImGui_EndTabItem()
 	}
@@ -654,6 +699,7 @@ settings_gui() {
 	if _ImGui_BeginTabItem("debug") {
 		_ImGui_NewLine()
 		_ImGui_Checkbox("Don't draw the settings window when in the background", enable_dont_render)
+		_ImGui_Checkbox("trash aimbot visible only beta", enable_trash_aimbot)
 
 		_ImGui_Text("LocalPlayer : " . LocalPlayer.entity)
 		_ImGui_Text("current weapon entity : " . LocalPlayer.GetWeapon())
