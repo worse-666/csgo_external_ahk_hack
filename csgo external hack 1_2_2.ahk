@@ -79,7 +79,7 @@ Class CPlayer {
 		,this.vecVelocity       := Sqrt(NumGet(ent_struct, m_vecVelocity, "Float")**2 + NumGet(ent_struct, m_vecVelocity+0x4, "Float")**2)
 		,this.m_vecViewOffset   := [NumGet(ent_struct, m_vecViewOffset, "float"), NumGet(ent_struct, m_vecViewOffset+0x4, "float"), NumGet(ent_struct, m_vecViewOffset+0x8, "float")]
 		,this.localHead         := [this.m_vecOrigin[1]+this.m_vecViewOffset[1], this.m_vecOrigin[2]+this.m_vecViewOffset[2], this.m_vecOrigin[3]+this.m_vecViewOffset[3]]
-		,this.m_bDormant        := NumGet(player_struct, m_bDormant, "int")
+		,this.m_bDormant        := NumGet(ent_struct, m_bDormant, "int")
 	}
 
 	GetViewModel() {
