@@ -14,6 +14,7 @@ SetMouseDelay, -1
 SendMode Input
 SetBatchLines,-1
 ListLines, Off
+Process, Priority, , H
 
 if !Read_csgo_offsets_from_hazedumper() {
 	MsgBox, 48, Error, Failed to get csgo offsets!
@@ -131,46 +132,6 @@ Global GLOWSTYLE_RIM3D      := 1
 Global GLOWSTYLE_EDGE       := 2
 Global GLOWSTYLE_EDGE_PULSE := 3
 
-/*
-Class GlowObjectDefinition {
-	__New(ByRef glowObj ,index) {
-		Global glow_struct
-		csgo.readRaw(GlowObj+(index*0x38), glow_struct, 0x38)
-		this.nextFreeSlot                    := NumGet(glow_struct, GLOWSTRUCT_nextFreeSlot, "int")
-		,this.entity                         := NumGet(glow_struct, GLOWSTRUCT_entity, "int")
-		,this.glowColor_r                    := NumGet(glow_struct, GLOWSTRUCT_glowColor_r, "float")
-		,this.glowColor_g                    := NumGet(glow_struct, GLOWSTRUCT_glowColor_g, "float")
-		,this.glowColor_b                    := NumGet(glow_struct, GLOWSTRUCT_glowColor_b, "float")
-		,this.glowColor_a                    := NumGet(glow_struct, GLOWSTRUCT_glowColor_a, "float")
-		,this.glowAlphaCappedByRenderAlpha   := NumGet(glow_struct, GLOWSTRUCT_glowAlphaCappedByRenderAlpha, "char")
-		,this.glowAlphaFunctionOfMaxVelocity := NumGet(glow_struct, GLOWSTRUCT_glowAlphaFunctionOfMaxVelocity, "float")
-		,this.glowAlphaMax                   := NumGet(glow_struct, GLOWSTRUCT_glowAlphaMax, "float")
-		,this.glowPulseOverdrive             := NumGet(glow_struct, GLOWSTRUCT_glowPulseOverdrive, "float")
-		,this.renderWhenOccluded             := NumGet(glow_struct, GLOWSTRUCT_renderWhenOccluded, "char")
-		,this.renderWhenUnoccluded           := NumGet(glow_struct, GLOWSTRUCT_renderWhenUnoccluded, "char")
-		,this.fullBloomRender                := NumGet(glow_struct, GLOWSTRUCT_fullBloomRender, "char")
-		,this.fullBloomStencilTestValue      := NumGet(glow_struct, GLOWSTRUCT_fullBloomStencilTestValue, "int")
-		,this.glowStyle                      := NumGet(glow_struct, GLOWSTRUCT_glowStyle, "int")
-		,this.splitScreenSlot                := NumGet(glow_struct, GLOWSTRUCT_splitScreenSlot, "int")
-		,this.index := index
-		,this.glowObj := glowObj
-	}
-	
-	Glow(ByRef r, ByRef g, ByRef b, ByRef a, ByRef rwo, ByRef rwu, ByRef fbr, gs:=0) {
-		NumPut(r/255, glow_struct, GLOWSTRUCT_glowColor_r, "float")
-		NumPut(g/255, glow_struct, GLOWSTRUCT_glowColor_g, "float")
-		NumPut(b/255, glow_struct, GLOWSTRUCT_glowColor_b, "float")
-		NumPut(a/255, glow_struct, GLOWSTRUCT_glowColor_a, "float")
-		NumPut(rwo, glow_struct, GLOWSTRUCT_renderWhenOccluded, "char")
-		NumPut(rwu, glow_struct, GLOWSTRUCT_renderWhenUnoccluded, "char")
-		NumPut(fbr, glow_struct, GLOWSTRUCT_fullBloomRender, "char")
-		NumPut(gs, glow_struct, GLOWSTRUCT_glowStyle, "int")
-		csgo.writeRaw(this.glowObj+(this.index*0x38), &glow_struct, 0x38)
-	}
-}
-*/
-
-;GlobalVars
 Global realtime          := 0x0 ;float
 Global framecount        := 0x4 ;int
 Global absoluteFrameTime := 0x8 ;float
@@ -265,64 +226,140 @@ Global client := csgo.getModuleBaseAddress("client.dll")
 Global engine := csgo.getModuleBaseAddress("engine.dll")
 Global materialsystem := csgo.getModuleBaseAddress("materialsystem.dll")
 
-;pattern := csgo.hexStringToPattern("55 8B EC 81 EC ?? ?? ?? ?? 56 57 8B F9 C7 45")
-;Global test := csgo.modulePatternScan("engine.dll", pattern*) + 0x0
-;msgbox % test
+if !FileExist("C:\Users\%A_UserName%\Documents\cs\cfg.ini") {		
+	IniRead, a, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow
+	IniRead, b, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow_enemy
+	IniRead, c, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color
+	IniRead, d, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_a
+	IniRead, e, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_r
+	IniRead, f, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_g
+	IniRead, g, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_b
+	IniRead, h, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow_team
+	IniRead, i, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color
+	IniRead, j, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_a
+	IniRead, k, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_r
+	IniRead, l, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_g
+	IniRead, m, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_b
 
+	IniRead, n, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams
+	IniRead, o, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_enemy
+	IniRead, p, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color
+	IniRead, q, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_r
+	Iniwrite, z, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_g
+	IniRead, r, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_b
+	IniRead, s, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_team
+	IniRead, t, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color
+	IniRead, u, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_r
+	IniRead, v, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_g
+	IniRead, w, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_b
+	IniRead, x, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_local
+	IniRead, y, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color
+	IniRead, aa, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_r
+	IniRead, ab, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_g
+	IniRead, ac, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_b
 
+	IniRead, ad, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,fov_changer_value
+	IniRead, ae, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_anti_flash
+	IniRead, af, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_radar_reveal
 
+	IniRead, ag, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_auto_bhop
+	IniRead, ah, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_auto_pistol
+	IniRead, ai, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,rcs_value
+}
 
+FileCreateDir, C:\Users\%A_UserName%\Documents\cs
+sleep 10
+FileAppend, C:\Users\%A_UserName%\Documents\cs\cfg.ini
 
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow_enemy
+Iniwrite, 0xFFC22CCF, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_a
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_r
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_g
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_enemy_color_b
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,enable_glow_team
+Iniwrite, 0xFF00C800, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_a
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_r
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_g
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Glow,glow_team_color_b
 
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_enemy
+Iniwrite, 0x00FFFFFF, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_r
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_g
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_enemy_color_b
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_team
+Iniwrite, 0x00FFFFFF, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_r
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_g
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_team_color_b
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,enable_chams_local
+Iniwrite, 0x00FFFFFF, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_r
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_g
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Chams,chams_local_color_b
 
+Iniwrite, 90, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,fov_changer_value
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_anti_flash
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_radar_reveal
 
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_auto_bhop
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,enable_auto_pistol
+Iniwrite, 0, C:\Users\%A_UserName%\Documents\cs\cfg.ini,Misc,rcs_value
 
 DllCall("QueryPerformanceFrequency", "Int64*", freq)
 ShootBefore := ShootAfter := 0
 Aimbot_ShootBefore := Aimbot_ShootAfter := 0
 
+Global enable_glow = a
+Global enable_glow_enemy := b
+Global glow_enemy_color := c
+Global glow_enemy_color_a := d
+Global glow_enemy_color_r := e
+Global glow_enemy_color_g := f
+Global glow_enemy_color_b := g
+Global enable_glow_team := h
+Global glow_team_color := i ;ARGB
+Global glow_team_color_a := j
+Global glow_team_color_r := k
+Global glow_team_color_g := l
+Global glow_team_color_b := m
+Global glow_weapon_color := 0
 
-Global enable_glow := 0
-Global enable_glow_enemy := 0
-Global glow_enemy_color := 0xFFC22CCF
-Global glow_enemy_color_a := 0
-Global glow_enemy_color_r := 0
-Global glow_enemy_color_g := 0
-Global glow_enemy_color_b := 0
-Global enable_glow_team := 0
-Global glow_team_color := 0xFF00C800 ;ARGB
-Global glow_team_color_a := 0
-Global glow_team_color_r := 0
-Global glow_team_color_g := 0
-Global glow_team_color_b := 0
-Global glow_weapon_color := 0xF0F0F0FF
+Global enable_chams := n
+Global enable_chams_enemy := o
+Global chams_enemy_color := p
+Global chams_enemy_color_r := q
+Global chams_enemy_color_g := z
+Global chams_enemy_color_b := r
+Global enable_chams_team := s
+Global chams_team_color := t
+Global chams_team_color_r := u
+Global chams_team_color_g := v
+Global chams_team_color_b := w
+Global enable_chams_local := x
+Global chams_local_color := y
+Global chams_local_color_r := aa
+Global chams_local_color_g := ab
+Global chams_local_color_b := ac
 
-Global enable_chams := 0
-Global enable_chams_enemy := 0
-Global chams_enemy_color := 0x00FFFFFF
-Global chams_enemy_color_r := 0
-Global chams_enemy_color_b := 0
-Global chams_enemy_color_b := 0
-Global enable_chams_team := 0
-Global chams_team_color := 0x00FFFFFF
-Global chams_team_color_r := 0
-Global chams_team_color_g := 0
-Global chams_team_color_b := 0
-Global enable_chams_local := 0
-Global chams_local_color := 0x00FFFFFF
-Global chams_local_color_r := 0
-Global chams_local_color_g := 0
-Global chams_local_color_b := 0
-
-Global fov_changer_value := 90
-
+Global fov_changer_value := ad
+Global enable_anti_flash := ae
+Global enable_radar_reveal := af
 ;Global aspect_ratio_value := 1.777777
 
 Global enable_dont_render := 1
 
+Global enable_auto_bhop := ag
+Global enable_auto_pistol := ah
+Global rcs_value := ai
+
 
 ;_ImGui_EnableViewports()
-hwnd := _ImGui_GUICreate("CS:GO Ahk External Hack Settings", 720, 540, (A_ScreenWidth-720)//2, (A_ScreenHeight-540)//2)
+hwnd := _ImGui_GUICreate("External CS legit hack", 720, 540, (A_ScreenWidth-720)//2, (A_ScreenHeight-540)//2)
 winshow, ahk_id %hwnd%
 Global rc
 VarSetCapacity(rc, 16)
@@ -332,7 +369,7 @@ SetFormat, integer, H
 
 Loop {
 	DllCall("QueryPerformanceCounter", "Int64*", LoopBefore)
-	if !(enable_dont_render & !WinActive("CS:GO Ahk External Hack Settings"))
+	if !(enable_dont_render & !WinActive("External CS legit hack"))
 		settings_gui()
 	IsInGame := IsInGame()
 	Global LocalPlayer := new CPlayer(GetLocalPlayer())
@@ -609,25 +646,11 @@ settings_gui() {
 	if !_ImGui_PeekMsg()
 		ExitApp
 	_ImGui_BeginFrame()
-	_ImGui_Begin("Setting")
-	_ImGui_SetWindowPos(0, 0)
+	
+	_ImGui_SetWindowPos(0, -20)
 	_ImGui_SetWindowSize(NumGet(rc, 8, "int"), NumGet(rc, 12, "int"))
 
 	_ImGui_BeginTabBar("setting tab")
-	/*
-	if _ImGui_BeginTabItem("aimbot") {
-		_ImGui_NewLine()
-		_ImGui_Columns(2)
-
-		_ImGui_Text("coming soon")
-
-
-
-
-	_ImGui_EndTabItem()
-	}
-	*/
-
 	if _ImGui_BeginTabItem("visuals") {
 		_ImGui_NewLine()
 		_ImGui_Columns(2)
@@ -643,12 +666,6 @@ settings_gui() {
 			_ImGui_SameLine()
 			_ImGui_Checkbox("Team FullBloom", enable_glow_team_fullbloom)
 			_ImGui_ColorEdit("team color", glow_team_color)
-			/*
-			_ImGui_Checkbox("Weapon", enable_glow_weapon)
-			_ImGui_SameLine()
-			_ImGui_Checkbox("Weapon FullBloom", enable_glow_weapon_fullbloom)
-			_ImGui_ColorEdit("weapon color", glow_weapon_color)
-			*/
 		_ImGui_EndChild()
 
 		_ImGui_Checkbox("Chams", enable_chams)
@@ -690,38 +707,13 @@ settings_gui() {
 
 		_ImGui_Checkbox("Auto Pistol", enable_auto_pistol)
 
-		_ImGui_SliderInt("RCS", rcs_value, 0, 100)
+		_ImGui_SliderInt("Recoil Control", rcs_value, 0, 100)
 
 
 	_ImGui_EndTabItem()
 	}
-	_ImGui_Columns(1)
-	if _ImGui_BeginTabItem("debug") {
-		_ImGui_NewLine()
-		_ImGui_Checkbox("Don't draw the settings window when in the background", enable_dont_render)
-		_ImGui_Checkbox("trash aimbot visible only beta", enable_trash_aimbot)
 
-		_ImGui_Text("LocalPlayer : " . LocalPlayer.entity)
-		_ImGui_Text("current weapon entity : " . LocalPlayer.GetWeapon())
-		_ImGui_Text("current weapon index : " . GetWeaponIndex(LocalPlayer.GetWeapon()))
-		_ImGui_Text("m_iShotsFired : " . LocalPlayer.m_iShotsFired)
 
-		GlobalVar := new GlobalVars()
-
-		_ImGui_Text("fps : " . 1/GlobalVar.absoluteFrameTime)
-		_ImGui_Text("maxClients : " . GlobalVar.maxClients)
-		_ImGui_Text("tick : " . 1/GlobalVar.intervalPerTick)
-
-		_ImGui_Text("glow object count : " . csgo.read(client + dwGlowObjectManager + 4, "int"))
-		
-		_ImGui_Text("Loop timer : " . LoopTimer . " ms")
-
-		
-
-		
-
-	}
-	_ImGui_EndTabBar()
 
 	
 
